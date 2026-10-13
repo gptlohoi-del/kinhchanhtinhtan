@@ -18,7 +18,7 @@
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             width: 100%;
-            box-sizing: border-box; /* Đảm bảo padding không bị tràn viền màn hình */
+            box-sizing: border-box;
         }
         audio {
             width: 100%;
@@ -68,13 +68,11 @@
         }
         .sentence-item:hover { background-color: #f0f0f0; }
         
-        /* Highlight câu đang phát */
         .sentence-item.current {
             border-left: 5px solid #007bff;
             font-weight: bold;
             background-color: #e3f2fd;
         }
-        /* Highlight câu được tích chọn */
         .sentence-item.selected {
             background-color: #fff3cd;
         }
@@ -96,8 +94,8 @@
         }
         .sentence-text {
             flex: 1;
-            text-align: justify;       /* Thêm dòng này để căn đều 2 bên */
-            text-justify: inter-word;   /* Giúp khoảng cách giữa các từ đều đặn hơn trên trình duyệt di động */
+            text-align: justify;
+            text-justify: inter-word;
         }
         .time-badge {
             color: #888;
@@ -193,18 +191,14 @@
         let sentences = [];
         let currentSentenceIndex = -1;
         
-        // Biến cho A-B Loop
         let abState = 0; 
         let loopA = 0;
         let loopB = 0;
         let isABLoopMode = false;
 
-        // Biến cho Lặp Đa Câu (Multi-select)
         let selectedSentences = [];
         let isSentenceLoopMode = false;
-        let currentSelectedPlayingIdx = 0; // Trỏ tới vị trí trong mảng selectedSentences
 
-        // Tự động load file khi nằm chung thư mục
         window.onload = async () => {
             try {
                 const response = await fetch('subtitle.srt');
@@ -253,7 +247,6 @@
             renderSentencesList();
         }
 
-        // Tách câu chuẩn theo dấu chấm
         function groupSentences(srtData) {
             let result = [], currentSentence = null;
             for (let i = 0; i < srtData.length; i++) {
@@ -307,7 +300,6 @@
                     </div>
                 `;
                 
-                // Nhấp vào bất cứ đâu trên dòng để toggle checkbox
                 div.onclick = (e) => handleRowClick(index, e);
                 sentencesListDiv.appendChild(div);
             });
@@ -319,11 +311,8 @@
             return `${m}:${s < 10 ? '0' : ''}${s}`;
         }
 
-        // --- XỬ LÝ CHỌN CÂU (MULTI-SELECT) ---
         function handleRowClick(index, event) {
             const chk = document.getElementById('chk-' + index);
-            
-            // Nếu click không trúng trực tiếp vào ô checkbox thì tự đổi trạng thái checkbox
             if (event.target.type !== 'checkbox') {
                 chk.checked = !chk.checked;
             }
@@ -339,22 +328,11 @@
                 document.getElementById('sentence-' + index).classList.remove('selected');
             }
             
-            // Luôn sort mảng để lặp theo đúng thứ tự thời gian
             selectedSentences.sort((a, b) => a - b);
             
-            // Nếu đang trong chế độ lặp mà thay đổi danh sách
             if (isSentenceLoopMode) {
                 if (selectedSentences.length === 0) {
                     stopSentenceLoop();
-                } else {
-                    // Cập nhật lại chỉ số đang phát cho đúng
-                    if (!selectedSentences.includes(currentSentenceIndex)) {
-                        currentSelectedPlayingIdx = 0;
-                        media.currentTime = sentences[selectedSentences[0]].start;
-                        media.play();
-                    } else {
-                        currentSelectedPlayingIdx = selectedSentences.indexOf(currentSentenceIndex);
-                    }
                 }
             }
         }
@@ -367,16 +345,13 @@
                     alert("Vui lòng tích chọn ít nhất 1 câu ở danh sách bên dưới!");
                     return;
                 }
-                
-                // Ưu tiên Loop câu -> Tắt A-B Loop
                 if (isABLoopMode) resetAB();
                 
                 isSentenceLoopMode = true;
                 const btn = document.getElementById('btnToggleLoop');
                 btn.classList.add('active');
-                btn.innerText = "🛑 Đang Lặp Câu Chon... (Bấm để Dừng)";
+                btn.innerText = "🛑 Đang Lặp Câu Chọn... (Bấm để Dừng)";
                 
-                currentSelectedPlayingIdx = 0;
                 media.currentTime = sentences[selectedSentences[0]].start;
                 media.play();
             }
@@ -399,50 +374,80 @@
             if (isSentenceLoopMode) stopSentenceLoop();
         }
 
-
-        // --- LOGIC CẬP NHẬT THỜI GIAN CHÍNH ---
+        // --- LOGIC CẬP NHẬT THỜI GIAN CHÍNH (ĐÃ TỐI ƯU NHẢY CÓC CÁC KHỐI RỜI RẠC) ---
         media.addEventListener('timeupdate', () => {
             const currentTime = media.currentTime;
             
-            // 1. Nếu đang bật Lặp Các Câu Đã Chọn
             if (isSentenceLoopMode && selectedSentences.length > 0) {
-                let targetIdx = selectedSentences[currentSelectedPlayingIdx];
-                let sen = sentences[targetIdx];
+                let blocks = getAllContinuousBlocks();
                 
-                // Cập nhật hiển thị
-                if (currentSentenceIndex !== targetIdx) {
-                    currentSentenceIndex = targetIdx;
-                    subtitleDisplay.innerText = sen.text;
-                    updateHighlight(targetIdx);
+                // 1. Kiểm tra xem currentTime có đang nằm trong bất kỳ khối hợp lệ nào không
+                let currentBlock = null;
+                let currentBlockIdx = -1;
+                
+                for (let i = 0; i < blocks.length; i++) {
+                    let b = blocks[i];
+                    if (currentTime >= b.start - 0.3 && currentTime <= b.end + 0.05) {
+                        currentBlock = b;
+                        currentBlockIdx = i;
+                        break;
+                    }
                 }
 
-                // Nếu chạm cuối câu hiện tại -> Nhảy sang câu tiếp theo trong mảng đã chọn
-                if (currentTime >= sen.end - 0.05) {
-                    currentSelectedPlayingIdx++;
-                    if (currentSelectedPlayingIdx >= selectedSentences.length) {
-                        currentSelectedPlayingIdx = 0; // Hết danh sách thì quay lại câu đầu tiên
+                // 2. Nếu currentTime nằm ở KHOẢNG TRỐNG giữa các khối (VD: giữa câu 7 và câu 20)
+                if (!currentBlock) {
+                    // Tìm khối tiếp theo có start > currentTime
+                    let nextBlock = blocks.find(b => b.start > currentTime);
+                    if (nextBlock) {
+                        media.currentTime = nextBlock.start;
+                        media.play();
+                        return;
+                    } else {
+                        // Nếu đã qua hết tất cả các khối, vòng về khối đầu tiên
+                        media.currentTime = blocks[0].start;
+                        media.play();
+                        return;
                     }
-                    media.currentTime = sentences[selectedSentences[currentSelectedPlayingIdx]].start;
-                    media.play();
-                    return; 
+                }
+
+                // 3. Tìm câu chính xác đang phát trong khối hiện tại để hiện subtitle
+                let foundIdx = -1;
+                for (let idx of currentBlock.indices) {
+                    if (currentTime >= sentences[idx].start && currentTime <= sentences[idx].end) {
+                        foundIdx = idx;
+                        break;
+                    }
+                }
+                if (foundIdx === -1) foundIdx = currentBlock.indices[0];
+
+                if (currentSentenceIndex !== foundIdx) {
+                    currentSentenceIndex = foundIdx;
+                    subtitleDisplay.innerText = sentences[foundIdx].text;
+                    updateHighlight(foundIdx);
+                }
+
+                // 4. Nếu chạy đến cuối khối hiện tại
+                if (currentTime >= currentBlock.end - 0.05) {
+                    if (currentBlockIdx < blocks.length - 1) {
+                        // Nhảy cóc mượt mà sang đầu khối tiếp theo (VD từ câu 7 nhảy sang câu 20)
+                        media.currentTime = blocks[currentBlockIdx + 1].start;
+                        media.play();
+                    } else {
+                        // Nếu là khối cuối cùng, vòng về khối đầu tiên
+                        media.currentTime = blocks[0].start;
+                        media.play();
+                    }
                 }
                 
-                // Nếu người dùng lỡ kéo thanh tiến trình ra ngoài vùng câu đang lặp -> Ép về lại
-                if (currentTime < sen.start || currentTime > sen.end) {
-                    media.currentTime = sen.start;
-                }
-                
-                return; // Bỏ qua logic bình thường
+                return; 
             }
 
-            // 2. Nếu đang bật Lặp A-B
             if (isABLoopMode && abState === 2) {
                 if (currentTime >= loopB) {
                     media.currentTime = loopA;
                 }
             }
             
-            // 3. Logic phát bình thường & Cập nhật phụ đề (Khi không lặp câu)
             let foundIndex = -1;
             for (let i = 0; i < sentences.length; i++) {
                 if (currentTime >= sentences[i].start && currentTime <= sentences[i].end) {
@@ -452,9 +457,11 @@
             }
 
             if (foundIndex !== -1) {
-                subtitleDisplay.innerText = sentences[foundIndex].text;
-                updateHighlight(foundIndex);
-                currentSentenceIndex = foundIndex;
+                if (currentSentenceIndex !== foundIndex) {
+                    currentSentenceIndex = foundIndex;
+                    subtitleDisplay.innerText = sentences[foundIndex].text;
+                    updateHighlight(foundIndex);
+                }
             } else {
                 if (!media.paused && !isSentenceLoopMode) {
                     subtitleDisplay.innerText = "♪ ♪ ♪";
@@ -463,7 +470,38 @@
             }
         });
 
-        // Hàm tô màu cuộn câu đang phát
+        // --- CÁC HÀM BỔ TRỢ QUẢN LÝ KHỐI ---
+        function getAllContinuousBlocks() {
+            if (selectedSentences.length === 0) return [];
+            let sortedSelected = [...selectedSentences].sort((a, b) => a - b);
+            
+            let blocks = [];
+            let currentBlock = {
+                start: sentences[sortedSelected[0]].start,
+                end: sentences[sortedSelected[0]].end,
+                indices: [sortedSelected[0]]
+            };
+
+            for (let i = 1; i < sortedSelected.length; i++) {
+                let prevIdx = sortedSelected[i - 1];
+                let currIdx = sortedSelected[i];
+                
+                if (currIdx === prevIdx + 1) {
+                    currentBlock.end = sentences[currIdx].end;
+                    currentBlock.indices.push(currIdx);
+                } else {
+                    blocks.push(currentBlock);
+                    currentBlock = {
+                        start: sentences[currIdx].start,
+                        end: sentences[currIdx].end,
+                        indices: [currIdx]
+                    };
+                }
+            }
+            blocks.push(currentBlock);
+            return blocks;
+        }
+
         function updateHighlight(index) {
             document.querySelectorAll('.sentence-item').forEach(item => item.classList.remove('current'));
             if (index !== -1) {
@@ -479,7 +517,6 @@
             }
         }
 
-        // --- LẶP ĐOẠN A-B TỰ DO ---
         function handleABClick() {
             const btn = document.getElementById('btnAB');
             if (abState === 0) {
@@ -497,7 +534,6 @@
                     btn.style.backgroundColor = "#28a745";
                     btn.style.color = "#fff";
                     
-                    // Tắt Lặp Câu nếu đang bật
                     if (isSentenceLoopMode) stopSentenceLoop();
                 } else {
                     alert("Mốc B phải nằm sau mốc A!");

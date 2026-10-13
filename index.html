@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luyện Nghe Tiếng Anh (MP3 & SRT) - Bản Nâng Cấp</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        audio {
+            width: 100%;
+            margin-bottom: 20px;
+            outline: none;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s, color 0.2s;
+        }
+        button:hover { opacity: 0.9; }
+        button.active { background-color: #28a745; }
+        
+        .subtitle-display {
+            font-size: 2em;
+            text-align: center;
+            min-height: 2.5em;
+            margin: 20px 0;
+            padding: 20px;
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            border-radius: 8px;
+            text-shadow: 1px 1px 2px black;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .settings-panel {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            border: 1px solid #dee2e6;
+        }
+        .settings-panel h3 { margin-top: 0; margin-bottom: 15px; color: #333; }
+        
+        .sentences-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 4px;
+            background: #fff;
+        }
+        .sentence-item {
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+            transition: background 0.2s;
+            line-height: 1.5;
+        }
+        .sentence-item:hover { background-color: #f0f0f0; }
+        .sentence-item.current {
+            background-color: #e3f2fd;
+            border-left: 4px solid #007bff;
+            font-weight: bold;
+        }
+        .time-badge {
+            color: #666;
+            font-size: 0.9em;
+            margin-right: 10px;
+            font-family: monospace;
+            background: #eee;
+            padding: 2px 5px;
+            border-radius: 4px;
+        }
+        .local-fallback {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 10px;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 style="text-align: center; color: #2c3e50;">🎧 Luyện Nghe Tiếng Anh (Bản Nâng Cấp Tối Ưu)</h2>
+        
+        <div class="local-fallback" id="localFallback" style="display:none;">
+            <b>Lưu ý khi mở trên PC:</b> Trình duyệt chặn tự động đọc file cục bộ. Vui lòng chọn file thủ công bên dưới!
+            <div style="margin-top: 10px;">
+                Chọn file MP3: <input type="file" id="mediaUpload" accept="audio/mp3,audio/*"> <br><br>
+                Chọn file SRT: <input type="file" id="srtUpload" accept=".srt">
+            </div>
+        </div>
+
+        <audio id="myMedia" controls src="audio.mp3">
+            Trình duyệt không hỗ trợ thẻ audio.
+        </audio>
+
+        <div class="subtitle-display" id="currentSubtitle">
+            Đang tải dữ liệu...
+        </div>
+
+        <div class="settings-panel">
+            <h3>🔄 Chế độ Lặp đoạn AB (1 chạm)</h3>
+            <button id="btnAB" onclick="handleABClick()" style="width: 100%; padding: 15px; font-size: 1.2em;">
+                [ A-B ] Bấm vào đây để đặt mốc A
+            </button>
+        </div>
+
+        <div class="settings-panel">
+            <h3>🛑 Chế độ Ngắt Từng Câu (Shadowing)</h3>
+            <div class="controls">
+                <button id="toggleSentenceModeBtn" onclick="toggleSentenceMode()">Bật: Dừng ở cuối câu</button>
+                <button onclick="playPrevSentence()">❮ Câu Trước</button>
+                <button onclick="replayCurrentSentence()">⟲ Nghe Lại Câu Này</button>
+                <button onclick="playNextSentence()">Câu Tiếp ❯</button>
+            </div>
+        </div>
+
+        <div class="settings-panel">
+            <h3>📝 Danh sách câu (Bấm để nghe)</h3>
+            <div class="sentences-list" id="sentencesList"></div>
+        </div>
+    </div>
+
+    <script>
+        const media = document.getElementById('myMedia');
+        const subtitleDisplay = document.getElementById('currentSubtitle');
+        const sentencesListDiv = document.getElementById('sentencesList');
+        const localFallback = document.getElementById('localFallback');
+        
+        let sentences = [];
+        let currentSentenceIndex = -1;
+        
+        // Cờ trạng thái
+        let isSentenceMode = false;
+        let hasPausedForCurrent = false; 
+        
+        // Biến cho lặp A-B
+        let abState = 0; // 0: Tắt, 1: Đã có A, 2: Đang lặp AB
+        let loopA = 0;
+        let loopB = 0;
+        let isABLoopMode = false;
+
+        // Auto load (Dành cho web server hoặc Github Pages)
+        window.onload = async () => {
+            try {
+                const response = await fetch('subtitle.srt');
+                if (response.ok) {
+                    const text = await response.text();
+                    processSRT(text);
+                    subtitleDisplay.innerHTML = "Đã tự động tải dữ liệu.<br>Bấm Play để bắt đầu nghe.";
+                } else { throw new Error("Not found"); }
+            } catch (error) {
+                subtitleDisplay.innerText = "Vui lòng chọn file thủ công.";
+                localFallback.style.display = 'block';
+            }
+        };
+
+        // Upload thủ công
+        document.getElementById('mediaUpload').addEventListener('change', e => {
+            if (e.target.files[0]) media.src = URL.createObjectURL(e.target.files[0]);
+        });
+        document.getElementById('srtUpload').addEventListener('change', e => {
+            if (e.target.files[0]) {
+                const reader = new FileReader();
+                reader.onload = evt => {
+                    processSRT(evt.target.result);
+                    subtitleDisplay.innerText = "Đã tải phụ đề! Bấm Play để bắt đầu.";
+                };
+                reader.readAsText(e.target.files[0]);
+            }
+        });
+
+        // Xử lý SRT
+        function processSRT(data) {
+            const blocks = data.replace(/\r/g, '').trim().split('\n\n');
+            const parsedData = [];
+            blocks.forEach(block => {
+                const lines = block.split('\n');
+                if(lines.length >= 3) {
+                    const timeMatch = lines[1].match(/(\d{2}:\d{2}:\d{2},\d{3}) --> (\d{2}:\d{2}:\d{2},\d{3})/);
+                    if(timeMatch) {
+                        parsedData.push({
+                            start: timeToSeconds(timeMatch[1]),
+                            end: timeToSeconds(timeMatch[2]),
+                            // Loại bỏ các tag HTML hoặc tag tiếng ồn như [music], >>
+                            text: lines.slice(2).join(' ').replace(/<[^>]*>?/gm, '').replace(/\[.*?\]/g, '').replace(/>>/g, '').trim()
+                        });
+                    }
+                }
+            });
+            sentences = groupSentences(parsedData);
+            renderSentencesList();
+        }
+
+        // Gom câu theo dấu chấm
+        function groupSentences(srtData) {
+            let result = [], currentSentence = null;
+            for (let i = 0; i < srtData.length; i++) {
+                let text = srtData[i].text.replace(/\n/g, ' ').trim();
+                
+                // Bỏ qua các dòng trống sau khi đã filter
+                if (!text) continue;
+
+                if (!currentSentence) {
+                    currentSentence = { start: srtData[i].start, end: srtData[i].end, text: text };
+                } else {
+                    currentSentence.end = srtData[i].end;
+                    currentSentence.text += " " + text;
+                }
+                
+                // Gom câu: Chỉ cắt khi gặp dấu chấm (.), hỏi chấm (?), chấm than (!) ở cuỗi chuỗi
+                if (text.match(/[.!?]$/)) {
+                    result.push({...currentSentence});
+                    currentSentence = null;
+                }
+            }
+            if (currentSentence) result.push(currentSentence);
+            return result;
+        }
+
+        function timeToSeconds(timeStr) {
+            const parts = timeStr.replace(',', '.').split(':');
+            return (parseFloat(parts[0]) * 3600) + (parseFloat(parts[1]) * 60) + parseFloat(parts[2]);
+        }
+
+        function renderSentencesList() {
+            sentencesListDiv.innerHTML = '';
+            sentences.forEach((sentence, index) => {
+                const div = document.createElement('div');
+                div.className = 'sentence-item';
+                div.id = 'sentence-' + index;
+                div.innerHTML = `<span class="time-badge">${formatTime(sentence.start)}</span> ${sentence.text}`;
+                div.onclick = () => jumpToSentence(index);
+                sentencesListDiv.appendChild(div);
+            });
+        }
+
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60);
+            const s = Math.floor(seconds % 60);
+            return `${m}:${s < 10 ? '0' : ''}${s}`;
+        }
+
+        // ====== CORE LOGIC: TIME UPDATE ======
+        media.addEventListener('timeupdate', () => {
+            const currentTime = media.currentTime;
+            let foundIndex = -1;
+            
+            for (let i = 0; i < sentences.length; i++) {
+                if (currentTime >= sentences[i].start && currentTime <= sentences[i].end) {
+                    foundIndex = i;
+                    break;
+                }
+            }
+
+            if (foundIndex !== -1) {
+                subtitleDisplay.innerText = sentences[foundIndex].text;
+                updateHighlight(foundIndex);
+                
+                // Nếu nhảy sang câu mới, tự động mở cờ ngắt
+                if (currentSentenceIndex !== foundIndex) {
+                    currentSentenceIndex = foundIndex;
+                    hasPausedForCurrent = false; 
+                }
+                
+                // CƠ CHẾ NGẮT CÂU
+                if (isSentenceMode) {
+                    // Trừ hao 0.05s để tránh nhảy sang frame của gap
+                    if (!hasPausedForCurrent && currentTime >= sentences[currentSentenceIndex].end - 0.05) {
+                        media.pause();
+                        hasPausedForCurrent = true;
+                        media.currentTime = sentences[currentSentenceIndex].end; 
+                    }
+                }
+            } else {
+                if(!media.paused) {
+                    subtitleDisplay.innerText = "♪ ♪ ♪";
+                    updateHighlight(-1);
+                }
+            }
+
+            // CƠ CHẾ LẶP A-B
+            if (isABLoopMode && abState === 2) {
+                if (currentTime >= loopB) {
+                    media.currentTime = loopA;
+                }
+            }
+        });
+        
+        // Sự kiện khi bấm nút play trên thanh audio
+        media.addEventListener('play', () => {
+            if (isSentenceMode && hasPausedForCurrent) {
+                hasPausedForCurrent = false;
+                playNextSentence();
+            }
+        });
+
+        function updateHighlight(index) {
+            document.querySelectorAll('.sentence-item').forEach(item => item.classList.remove('current'));
+            if (index !== -1) {
+                const el = document.getElementById('sentence-' + index);
+                if (el) {
+                    el.classList.add('current');
+                    if(!media.paused) {
+                        const container = document.getElementById('sentencesList');
+                        container.scrollTop = el.offsetTop - container.offsetTop - 80;
+                    }
+                }
+            }
+        }
+
+        // ====== NÚT LẶP A-B ĐƯỢC THIẾT KẾ LẠI ======
+        function handleABClick() {
+            const btn = document.getElementById('btnAB');
+            if (abState === 0) {
+                // Trạng thái 1: Đặt A
+                loopA = media.currentTime;
+                abState = 1;
+                btn.innerText = `[ A-B ] Đã lấy A (${formatTime(loopA)}) - Bấm để đặt mốc B`;
+                btn.style.backgroundColor = "#ffc107";
+                btn.style.color = "#000";
+            } else if (abState === 1) {
+                // Trạng thái 2: Đặt B và chạy
+                loopB = media.currentTime;
+                if (loopB > loopA) {
+                    abState = 2;
+                    isABLoopMode = true;
+                    btn.innerText = `[ A-B ] Đang lặp: ${formatTime(loopA)} ⟷ ${formatTime(loopB)} (Bấm để TẮT)`;
+                    btn.style.backgroundColor = "#28a745";
+                    btn.style.color = "#fff";
+                    
+                    // Ưu tiên AB, tắt chế độ ngắt câu nếu đang bật
+                    if (isSentenceMode) toggleSentenceMode();
+                } else {
+                    alert("Mốc B phải nằm sau mốc A!");
+                    resetAB();
+                }
+            } else {
+                // Trạng thái 3: Tắt
+                resetAB();
+            }
+        }
+
+        function resetAB() {
+            abState = 0;
+            isABLoopMode = false;
+            const btn = document.getElementById('btnAB');
+            btn.innerText = "[ A-B ] Bấm vào đây để đặt mốc A";
+            btn.style.backgroundColor = "#007bff";
+            btn.style.color = "#fff";
+        }
+
+        // ====== ĐIỀU KHIỂN CÂU ======
+        function toggleSentenceMode() {
+            isSentenceMode = !isSentenceMode;
+            const btn = document.getElementById('toggleSentenceModeBtn');
+            if (isSentenceMode) {
+                btn.classList.add('active');
+                btn.innerText = "Đang bật: Dừng ở cuối câu";
+                hasPausedForCurrent = false; // Reset cờ
+                
+                // Đồng bộ chỉ mục câu hiện tại
+                const ct = media.currentTime;
+                currentSentenceIndex = sentences.findIndex(s => ct >= s.start && ct <= s.end);
+                if(currentSentenceIndex === -1) {
+                     currentSentenceIndex = sentences.findIndex(s => s.start >= ct);
+                     if(currentSentenceIndex === -1) currentSentenceIndex = 0;
+                }
+                // Tắt A-B Loop
+                if(abState === 2) resetAB();
+            } else {
+                btn.classList.remove('active');
+                btn.innerText = "Bật: Dừng ở cuối câu";
+                hasPausedForCurrent = false;
+            }
+        }
+
+        function jumpToSentence(index) {
+            if (index >= 0 && index < sentences.length) {
+                currentSentenceIndex = index;
+                hasPausedForCurrent = false; // Vô câu mới, mở cờ
+                media.currentTime = sentences[index].start;
+                media.play();
+            }
+        }
+
+        function playNextSentence() {
+            if (currentSentenceIndex < sentences.length - 1) jumpToSentence(currentSentenceIndex + 1);
+        }
+
+        function playPrevSentence() {
+            if (currentSentenceIndex > 0) jumpToSentence(currentSentenceIndex - 1);
+        }
+
+        function replayCurrentSentence() {
+            if (currentSentenceIndex !== -1) jumpToSentence(currentSentenceIndex);
+        }
+    </script>
+</body>
+</html>

@@ -616,6 +616,24 @@
             btn.style.backgroundColor = "#007bff";
             btn.style.color = "#fff";
         }
+        // Đăng ký Service Worker để lưu Offline
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(() => console.log('Đã lưu trang web để chạy Offline!'))
+                    .catch(err => console.log('Lỗi lưu Offline:', err));
+            });
+        }
+
+        // Mẹo quan trọng trên điện thoại: Nạp audio.mp3 dưới dạng Blob để tua/lặp mượt mà khi tắt mạng
+        fetch('audio.mp3')
+            .then(res => res.blob())
+            .then(blob => {
+                const currentTime = media.currentTime;
+                media.src = URL.createObjectURL(blob);
+                media.currentTime = currentTime;
+            })
+            .catch(() => console.log('Đang dùng nguồn audio mặc định'));
     </script>
 </body>
 </html>

@@ -163,6 +163,141 @@
         button.active { background-color: #dc3545 !important; }
         .btn-secondary { background-color: #6c757d; flex: none; }
         .btn-secondary:hover { background-color: #5a6268; }
+
+        /* --- FLOAT ICON HÌNH TÀI LIỆU SÁT GÓC PHẢI DƯỚI --- */
+        .fab-doc-btn {
+            position: fixed;
+            bottom: 6px;
+            right: 6px;
+            width: 46px;
+            height: 46px;
+            min-width: unset !important;
+            padding: 0 !important;
+            border-radius: 50%;
+            background-color: #007bff;
+            color: #fff;
+            border: 2px solid #fff;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 9999;
+            transition: transform 0.15s, background-color 0.2s;
+        }
+        .fab-doc-btn:active {
+            transform: scale(0.92);
+        }
+        .fab-doc-btn svg {
+            width: 22px;
+            height: 22px;
+            fill: currentColor;
+        }
+        .fab-badge {
+            position: absolute;
+            top: -4px;
+            left: -4px;
+            background-color: #dc3545;
+            color: white;
+            font-size: 11px;
+            font-weight: bold;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 4px;
+            border-radius: 9px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            box-sizing: border-box;
+        }
+
+        /* --- HỘP THOẠI NHẬP SỐ CHỌN NHIỀU CÂU --- */
+        .range-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.55);
+            z-index: 10000;
+            display: none;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 15px 10px;
+            box-sizing: border-box;
+        }
+        .range-modal {
+            background: #fff;
+            width: 100%;
+            max-width: 400px;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            box-sizing: border-box;
+            margin-top: 10px;
+        }
+        .range-modal h4 {
+            margin: 0 0 8px 0;
+            color: #2c3e50;
+            font-size: 1.1em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .range-modal p {
+            margin: 0 0 10px 0;
+            font-size: 0.88em;
+            color: #555;
+            line-height: 1.4;
+        }
+        .range-input-box {
+            width: 100%;
+            padding: 10px 12px;
+            font-size: 1.25em;
+            font-weight: bold;
+            border: 2px solid #007bff;
+            border-radius: 6px;
+            box-sizing: border-box;
+            outline: none;
+            text-align: center;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        .quick-char-bar {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+        .quick-char-btn {
+            flex: 1;
+            min-width: unset !important;
+            padding: 8px 4px !important;
+            font-size: 0.95em !important;
+            background-color: #e9ecef !important;
+            color: #2c3e50 !important;
+            border: 1px solid #ced4da !important;
+            border-radius: 5px !important;
+        }
+        .quick-char-btn:active {
+            background-color: #d3d9df !important;
+        }
+        .range-modal-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .range-modal-actions button {
+            min-width: unset !important;
+            padding: 10px 8px !important;
+            font-size: 0.95em !important;
+        }
+        .btn-apply-loop {
+            background-color: #28a745 !important;
+        }
+        .btn-close-modal {
+            background-color: #6c757d !important;
+            flex: 0.6 !important;
+        }
     </style>
 </head>
 <body>
@@ -187,22 +322,60 @@
         </div>
 
         <div class="settings-panel">
-            <h3>🔄 1. Chế độ Lặp đoạn AB tự do</h3>
+            <h3>🔄 1. Lặp đoạn AB tự do</h3>
             <button id="btnAB" onclick="handleABClick()">
                 [ A-B ] Bấm vào đây để đặt mốc A
             </button>
         </div>
 
         <div class="settings-panel">
-            <h3>📑 2. Chế độ Lặp Danh Sách Câu </h3>
+            <h3>📑 2. Lặp Danh Sách Câu </h3>
             <p style="margin-top:0; color:#555; font-size:0.95em;">Tích chọn một hoặc nhiều câu bên dưới. Hệ thống sẽ liên tục lặp lại các câu bạn đã chọn.</p>
             <div class="controls">
-                <button id="btnToggleLoop" onclick="toggleSentenceLoop()">🔄 Bắt Đầu Lặp Các Câu Đã Chọn</button>
-                <button class="btn-secondary" onclick="clearSelection()">Xóa Chọn Tất Cả</button>
+                <button id="btnToggleLoop" onclick="toggleSentenceLoop()">🔄 Bắt đầu lặp</button>
+                <button class="btn-secondary" onclick="clearSelection()">Xóa tất cả</button>
             </div>
             
             <div class="sentences-list" id="sentencesList">
                 <!-- Dữ liệu render tại đây -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Nút Float Icon hình tài liệu sát góc phải dưới -->
+    <button class="fab-doc-btn" id="fabQuickSelect" onclick="openRangeModal()" title="Chọn nhanh nhiều câu">
+        <span class="fab-badge" id="fabBadge">0</span>
+        <svg viewBox="0 0 24 24">
+            <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+        </svg>
+    </button>
+
+    <!-- Hộp thoại nhập số chọn nhiều câu -->
+    <div class="range-modal-overlay" id="rangeModalOverlay" onclick="handleOverlayClick(event)">
+        <div class="range-modal">
+            <h4>
+                <span>📄 Chọn nhanh câu theo số</span>
+                <span id="totalSentenceHint" style="font-size: 0.85em; color: #007bff;"></span>
+            </h4>
+            <p>
+                Nhập câu hoặc khoảng câu (VD: <b>5-10,13,15,20-25</b>).<br>
+                Nhập <b>*</b> hoặc <b>#</b> để chọn tất cả.
+            </p>
+            <!-- type="tel" giúp mở bàn phím số điện thoại có sẵn 0-9, *, # -->
+            <input type="tel" inputmode="tel" id="rangeInput" class="range-input-box" placeholder="VD: 5-10,13,15 hoặc *" autocomplete="off">
+            
+            <!-- Hàng phím phụ trợ nhanh phòng trường hợp bàn phím số điện thoại ẩn dấu - hoặc , -->
+            <div class="quick-char-bar">
+                <button type="button" class="quick-char-btn" onclick="insertQuickChar('-')"><b>-</b> (Đến)</button>
+                <button type="button" class="quick-char-btn" onclick="insertQuickChar(',')"><b>,</b> (Phẩy)</button>
+                <button type="button" class="quick-char-btn" onclick="insertQuickChar('*')"><b>*</b> (Tất cả)</button>
+                <button type="button" class="quick-char-btn" onclick="clearRangeInput()">Xóa ô</button>
+            </div>
+
+            <div class="range-modal-actions">
+                <button type="button" onclick="applyRangeSelection(false)">✅ Chọn</button>
+                <button type="button" class="btn-apply-loop" onclick="applyRangeSelection(true)">🔄 Chọn & Lặp</button>
+                <button type="button" class="btn-close-modal" onclick="closeRangeModal()">Đóng</button>
             </div>
         </div>
     </div>
@@ -213,6 +386,10 @@
         const mainSubIpa = document.getElementById('mainSubIpa');
         const sentencesListDiv = document.getElementById('sentencesList');
         const localFallback = document.getElementById('localFallback');
+        const rangeModalOverlay = document.getElementById('rangeModalOverlay');
+        const rangeInput = document.getElementById('rangeInput');
+        const fabBadge = document.getElementById('fabBadge');
+        const totalSentenceHint = document.getElementById('totalSentenceHint');
         
         // Từ điển IPA được tích hợp sẵn từ file IPA.txt
         const ipaDict = {"a": "eɪ", "abdomen": "æbˈdoʊmən", "about": "əˈbaʊt", "absolute": "ˈæbsəˌlut", "absorption": "əbˈzɔrpʃən", "abundant": "əˈbʌndənt", "accumulate": "əˈkjumjəˌleɪt", "accumulated": "əˈkjumjəˌleɪtɪd", "after": "ˈæftər", "age": "eɪʤ", "aging": "ˈeɪʤɪŋ", "alert": "əˈlɜrt", "alive": "əˈlaɪv", "all": "ɔl", "allowing": "əˈlaʊɪŋ", "alone": "əˈloʊn", "also": "ˈɔlsoʊ", "always": "ˈɔlˌweɪz", "amidst": "əˈmɪdst", "an": "æn", "anchor": "ˈæŋkər", "anchored": "ˈæŋkərd", "anchoring": "ˈæŋkərɪŋ", "ancient": "ˈeɪnʧənt", "and": "ænd", "anger": "ˈæŋɡər", "appear": "əˈpɪr", "are": "ɑr", "arise": "əˈraɪz", "arises": "əˈraɪzəz", "arising": "əˈraɪzɪŋ", "arms": "ɑrmz", "arrogance": "ˈɛrəɡəns", "as": "æz", "asleep": "əˈslip", "at": "æt", "atop": "əˈtɑp", "attachments": "əˈtæʧmənts", "attain": "əˈteɪn", "attainments": "əˈteɪnmənts", "attains": "əˈteɪnz", "attention": "əˈtɛnʃən", "awake": "əˈweɪk", "awakening": "əˈweɪkənɪŋ", "aware": "əˈwɛr", "awareness": "əˈwɛrnəs", "away": "əˈweɪ", "be": "bi", "become": "bɪˈkʌm", "becomes": "bɪˈkʌmz", "before": "bɪˈfɔr", "begin": "bɪˈɡɪn", "being": "ˈbiɪŋ", "beings": "ˈbiɪŋz", "below": "bɪˈloʊ", "bless": "blɛs", "boat": "boʊt", "body": "ˈbɑdi", "bones": "boʊnz", "both": "boʊθ", "bound": "baʊnd", "bow": "baʊ", "brave": "breɪv", "break": "breɪk", "breath": "brɛθ", "breathe": "brið", "breathing": "ˈbriðɪŋ", "buddha": "ˈbudə", "buddhas": "ˈbudəz", "burden": "ˈbɜrdən", "burning": "ˈbɜrnɪŋ", "but": "bʌt", "by": "baɪ", "call": "kɔl", "calm": "kɑm", "can": "kæn", "cannot": "ˈkænɑt", "care": "kɛr", "carried": "ˈkærid", "carries": "ˈkæriz", "carry": "ˈkæri", "cause": "kɑz", "cessation": "ˌsɛˈseɪʃən", "challenges": "ˈʧælənʤɪz", "clear": "klɪr", "clearly": "ˈklɪrli", "clinging": "ˈklɪŋɪŋ", "closed": "kloʊzd", "cm": "cm", "comes": "kʌmz", "comfortable": "ˈkʌmfərtəbəl", "compassionate": "kəmˈpæʃənət", "compassionately": "kəmˈpæʃənətli", "complementary": "ˌkɑmpləˈmɛntri", "complete": "kəmˈplit", "conditions": "kənˈdɪʃənz", "confidence": "ˈkɑnfədəns", "conflicts": "kənˈflɪkts", "connects": "kəˈnɛkts", "constantly": "ˈkɑnstəntli", "contemplate": "ˈkɑntəmˌpleɪt", "contemplation": "ˌkɑntəmˈpleɪʃən", "continuously": "kənˈtɪnjuəsli", "contrary": "ˈkɑntrɛri", "control": "kənˈtroʊl", "controlling": "kənˈtroʊlɪŋ", "correct": "kəˈrɛkt", "countless": "ˈkaʊntləs", "craving": "ˈkreɪvɪŋ", "crossed": "krɔst", "cultivate": "ˈkʌltəˌveɪt", "cultivating": "ˈkʌltɪˌveɪtɪŋ", "cultivation": "ˌkʌltɪˈveɪʃən", "daily": "ˈdeɪli", "dangerous": "ˈdeɪnʤərəs", "darkness": "ˈdɑrknəs", "day": "deɪ", "dear": "dɪr", "death": "dɛθ", "debris": "dəˈbri", "decay": "dəˈkeɪ", "deeds": "didz", "deep": "dip", "deeper": "ˈdipər", "deeply": "ˈdipli", "deer": "dɪr", "desire": "dɪˈzaɪər", "desires": "dɪˈzaɪərz", "detail": "dɪˈteɪl", "detailed": "dɪˈteɪld", "details": "dɪˈteɪlz", "determination": "dɪˌtɜrməˈneɪʃən", "develop": "dɪˈvɛləp", "dharma": "ˈdɑrmə", "die": "daɪ", "difficult": "ˈdɪfəkəlt", "diligence": "ˈdɪləʤəns", "diligent": "ˈdɪlɪʤənt", "diligently": "ˈdɪləʤəntli", "directly": "dəˈrɛktli", "discerned": "dɪˈsɜrnd", "discover": "dɪˈskʌvər", "do": "du", "doctrine": "ˈdɑktrən", "doing": "ˈduɪŋ", "done": "dʌn", "dream": "drim", "dust": "dʌst", "dwelling": "ˈdwɛlɪŋ", "early": "ˈɜrli", "earnestly": "ˈɜrnəstli", "effort": "ˈɛfərt", "ego": "ˈiɡoʊ", "endeavor": "ɪnˈdɛvər", "endless": "ˈɛndləs", "engrave": "ɪnˈɡreɪv", "enlightened": "ɛnˈlaɪtənd", "enlightenment": "ɛnˈlaɪtənmənt", "enter": "ˈɛntər", "entered": "ˈɛntərd", "entire": "ɪnˈtaɪər", "essential": "ɪˈsɛnʃəl", "established": "ɪˈstæblɪʃt", "even": "ˈivɪn", "eventually": "ɪˈvɛnʧəwəli", "every": "ˈɛvᵊri", "everything": "ˈɛvriˌθɪŋ", "explained": "ɪkˈspleɪnd", "eyes": "aɪz", "face": "feɪs", "facing": "ˈfeɪsɪŋ", "fade": "feɪd", "fall": "fɔl", "false": "fɔls", "fear": "fɪr", "feel": "fil", "feelings": "ˈfilɪŋz", "fellows": "ˈfɛloʊz", "fetter": "ˈfɛtər", "find": "faɪnd", "firm": "fɜrm", "firmly": "ˈfɜrmli", "first": "fɜrst", "focusing": "ˈfoʊkəsɪŋ", "follow": "ˈfɑloʊ", "following": "ˈfɑloʊɪŋ", "for": "fɔr", "forcing": "ˈfɔrsɪŋ", "foremost": "ˈfɔrˌmoʊst", "forever": "fəˈrɛvər", "form": "fɔrm", "found": "faʊnd", "foundation": "faʊnˈdeɪʃən", "four": "fɔr", "frequently": "ˈfrikwəntli", "from": "frʌm", "full": "fʊl", "gains": "ɡeɪnz", "gateway": "ˈɡeɪˌtweɪ", "gather": "ˈɡæðər", "gathering": "ˈɡæðərɪŋ", "gentle": "ˈʤɛntəl", "gently": "ˈʤɛntli", "giving": "ˈɡɪvɪŋ", "go": "ɡoʊ", "good": "ɡʊd", "govern": "ˈɡʌvərn", "gradually": "ˈɡræʤuᵊli", "gratitude": "ˈɡrætəˌtud", "great": "ɡreɪt", "greed": "ɡrid", "grow": "ɡroʊ", "grows": "ɡroʊz", "guide": "ɡaɪd", "guiding": "ˈɡaɪdɪŋ", "hands": "hændz", "have": "hæv", "he": "hi", "head": "hɛd", "healthy": "ˈhɛlθi", "heard": "hɜrd", "hearts": "hɑrts", "heavy": "ˈhɛvi", "help": "hɛlp", "highest": "ˈhaɪəst", "his": "hɪz", "holding": "ˈhoʊldɪŋ", "how": "haʊ", "however": "ˌhaʊˈɛvər", "human": "ˈhjumən", "humility": "hjuˈmɪlɪti", "i": "aɪ", "ignorance": "ˈɪɡnərəns", "ill": "ɪl", "illness": "ˈɪlnəs", "immediately": "ɪˈmidiətli", "impermanence": "impermanence", "impermanent": "impermanent", "indifference": "ɪnˈdɪfᵊrəns", "infinite": "ˈɪnfənət", "inner": "ˈɪnər", "insight": "ˈɪnˌsaɪt", "instance": "ˈɪnstəns", "instinctual": "instinctual", "into": "ˈɪntu", "invisible": "ɪnˈvɪzəbəl", "irresponsibility": "ɪrəˌspɑnsəˈbɪləti", "is": "ɪz", "it": "ɪt", "its": "ɪts", "jealousy": "ˈʤɛləsi", "jhana": "jhana", "journey": "ˈʤɜrni", "joyful": "ˈʤɔɪfəl", "just": "ʤʌst", "kanda": "ˈkændə", "karma": "ˈkɑrmə", "karmic": "karmic", "keeping": "ˈkipɪŋ", "kind": "kaɪnd", "kinds": "kaɪndz", "know": "noʊ", "knowing": "ˈnoʊɪŋ", "knowledge": "ˈnɑləʤ", "lap": "læp", "lead": "lid", "leader": "ˈlidər", "learn": "lɜrn", "legs": "lɛɡz", "let": "lɛt", "liberation": "ˌlɪbəˈreɪʃən", "lies": "laɪz", "life": "laɪf", "lifetimes": "ˈlaɪfˌtaɪmz", "lightly": "ˈlaɪtli", "like": "laɪk", "little": "ˈlɪtəl", "livelihood": "ˈlaɪvliˌhʊd", "lives": "lɪvz", "living": "ˈlɪvɪŋ", "located": "ˈloʊˌkeɪd", "location": "loʊˈkeɪʃən", "lofty": "ˈlɔfti", "long": "lɔŋ", "longer": "ˈlɔŋɡər", "lotus": "ˈloʊtəs", "lower": "ˈloʊər", "lowered": "ˈloʊərd", "maintain": "meɪnˈteɪn", "maintaining": "meɪnˈteɪnɪŋ", "makes": "meɪks", "many": "ˈmɛni", "map": "mæp", "mass": "mæs", "master": "ˈmæstər", "mastery": "ˈmæstəri", "matter": "ˈmætər", "may": "meɪ", "meaning": "ˈminɪŋ", "meaningless": "ˈminɪŋləs", "means": "minz", "meditation": "ˌmɛdəˈteɪʃən", "meditative": "ˈmɛdəˌteɪtɪv", "merely": "ˈmɪrli", "merit": "ˈmɛrət", "mind": "maɪnd", "mindful": "ˈmaɪndfəl", "moment": "ˈmoʊmənt", "more": "mɔr", "mouth": "maʊθ", "music": "ˈmjuzɪk", "must": "mʌst", "my": "maɪ", "name": "neɪm", "namo": "namo", "naturally": "ˈnæʧᵊrəli", "nature": "ˈneɪʧər", "navel": "ˈneɪvəl", "need": "nid", "never": "ˈnɛvər", "next": "nɛkst", "no": "noʊ", "noble": "ˈnoʊbəl", "non": "nɑn", "not": "nɑt", "object": "ˈɑbʤɛkt", "observe": "əbˈzɜrv", "observing": "əbˈzɜrvɪŋ", "obvious": "ˈɑbviəs", "of": "ʌv", "old": "oʊld", "on": "ɑn", "once": "wʌns", "one": "wʌn", "ones": "wʌnz", "only": "ˈoʊnli", "onto": "ˈɑntu", "or": "ɔr", "other": "ˈʌðər", "our": "ˈaʊər", "out": "aʊt", "outside": "ˈaʊtˈsaɪd", "over": "ˈoʊvər", "paired": "pɛrd", "palate": "ˈpælət", "palms": "pɑmz", "park": "pɑrk", "pass": "pæs", "past": "pæst", "path": "pæθ", "paths": "pæðz", "patience": "ˈpeɪʃəns", "peaceful": "ˈpisfəl", "perfectly": "ˈpɜrfəktli", "persistently": "pərˈsɪstəntli", "physical": "ˈfɪzɪkəl", "pile": "paɪl", "pillar": "ˈpɪlər", "place": "pleɪs", "pleasure": "ˈplɛʒər", "point": "pɔɪnt", "post": "poʊst", "posture": "ˈpɑsʧər", "powerful": "ˈpaʊərfəl", "powers": "ˈpaʊərz", "practice": "ˈpræktəs", "practicing": "ˈpræktəsɪŋ", "practitioners": "prækˈtɪʃənərz", "praise": "preɪz", "preached": "priʧt", "precious": "ˈprɛʃəs", "precise": "prɪˈsaɪs", "prevent": "prɪˈvɛnt", "pride": "praɪd", "proclaimed": "proʊˈkleɪmd", "profound": "proʊˈfaʊnd", "progress": "ˈprɑˌɡrɛs", "proper": "ˈprɑpər", "protect": "prəˈtɛkt", "provides": "prəˈvaɪdz", "pursuing": "pərˈsuɪŋ", "rapid": "ˈræpɪd", "reached": "riʧt", "refers": "rəˈfɜrz", "reflect": "rəˈflɛkt", "reflections": "rɪˈflɛkʃənz", "regarded": "rɪˈɡɑrdɪd", "relaxed": "rɪˈlækst", "remain": "rɪˈmeɪn", "remaining": "rɪˈmeɪnɪŋ", "remember": "rɪˈmɛmbər", "repent": "ˈripənt", "requires": "riˈkwaɪərz", "responsibility": "riˌspɑnsəˈbɪləti", "rest": "rɛst", "resting": "ˈrɛstɪŋ", "restless": "ˈrɛstləs", "rests": "rɛsts", "result": "rɪˈzʌlt", "results": "rɪˈzʌlts", "reverence": "ˈrɛvərəns", "right": "raɪt", "sacred": "ˈseɪkrɪd", "sangha": "sangha", "sariputra": "sariputra", "sariputta": "sariputta", "scattered": "ˈskætərd", "scriptures": "ˈskrɪpʧərz", "seated": "ˈsitɪd", "second": "ˈsɛkənd", "see": "si", "seems": "simz", "self": "sɛlf", "selfish": "ˈsɛlfɪʃ", "selfishness": "ˈsɛlfɪʃnəs", "sensation": "sɛnˈseɪʃən", "sense": "sɛns", "sentient": "sentient", "set": "sɛt", "settles": "ˈsɛtəlz", "shakyamuni": "shakyamuni", "shore": "ʃɔr", "should": "ʃʊd", "sickness": "ˈsɪknəs", "simply": "ˈsɪmpli", "sincere": "sɪnˈsɪr", "sinful": "ˈsɪnfəl", "singing": "ˈsɪŋɪŋ", "single": "ˈsɪŋɡəl", "sins": "sɪnz", "sit": "sɪt", "sitting": "ˈsɪtɪŋ", "six": "sɪks", "skillfully": "ˈskɪlfəli", "skin": "skɪn", "slightly": "ˈslaɪtli", "slow": "sloʊ", "slowly": "ˈsloʊli", "smallest": "ˈsmɔləst", "so": "soʊ", "softer": "ˈsɑftər", "solid": "ˈsɑləd", "someone": "ˈsʌmˌwʌn", "soul": "soʊl", "source": "sɔrs", "specific": "spəˈsɪfɪk", "spine": "spaɪn", "spiritual": "ˈspɪrɪʧᵊwəl", "stabilization": "ˌsteɪbələˈzeɪʃən", "stage": "steɪʤ", "state": "steɪt", "states": "steɪts", "steadily": "ˈstɛdəli", "steady": "ˈstɛdi", "stick": "stɪk", "sticks": "stɪks", "still": "stɪl", "stillness": "ˈstɪlnəs", "stop": "stɑp", "storm": "stɔrm", "strengthens": "ˈstrɛŋθənz", "stronger": "ˈstrɔŋər", "subside": "səbˈsaɪd", "subtle": "ˈsʌtəl", "such": "sʌʧ", "suddenly": "ˈsʌdənli", "suffering": "ˈsʌfᵊrɪŋ", "sufficient": "səˈfɪʃənt", "supernatural": "ˌsupərˈnæʧərəl", "surface": "ˈsɜrfəs", "sutra": "sutra", "swept": "swɛpt", "taught": "tɔt", "teachings": "ˈtiʧɪŋz", "technique": "tɛkˈnik", "techniques": "tɛkˈniks", "tense": "tɛns", "tension": "ˈtɛnʃən", "tethering": "ˈtɛðərɪŋ", "than": "ðæn", "that": "ðæt", "the": "ði", "their": "ðɛr", "them": "ðɛm", "then": "ðɛn", "there": "ðɛr", "therefore": "ˈðɛrˌfɔr", "these": "ðiz", "they": "ðeɪ", "things": "θɪŋz", "this": "ðɪs", "thorough": "ˈθɜroʊ", "those": "ðoʊz", "thoughts": "θɔts", "three": "θri", "through": "θru", "thus": "ðʌs", "tight": "taɪt", "time": "taɪm", "times": "taɪmz", "to": "tu", "together": "təˈɡɛðər", "tongue": "tʌŋ", "tool": "tul", "torso": "ˈtɔrˌsoʊ", "touching": "ˈtʌʧɪŋ", "toward": "təˈwɔrd", "towards": "təˈwɔrdz", "tranquil": "ˈtræŋkwəl", "trap": "træp", "travelers": "ˈtrævələrz", "treasure": "ˈtrɛʒər", "trivial": "ˈtrɪviəl", "true": "tru", "truth": "truθ", "truths": "truθs", "try": "traɪ", "turn": "tɜrn", "two": "tu", "ultimate": "ˈʌltəmət", "unclean": "ənˈklin", "understand": "ˌʌndərˈstænd", "unless": "ənˈlɛs", "unshakable": "ənˈʃeɪkəbəl", "unshaken": "ənˈʃeɪkən", "unswept": "ʌnˈswɛpt", "until": "ənˈtɪl", "unwavering": "ənˈweɪvərɪŋ", "unwholesome": "ʌnˈhoʊlsəm", "upper": "ˈʌpər", "upright": "əˈpraɪt", "uproot": "əˈprut", "upward": "ˈʌpwərd", "urge": "ɜrʤ", "us": "ʌs", "venerable": "ˈvɛnərəbəl", "virtue": "ˈvɜrʧu", "volume": "ˈvɑljum", "vow": "vaʊ", "walk": "wɔk", "wandering": "ˈwɑndərɪŋ", "was": "wʌz", "waste": "weɪst", "waves": "weɪvz", "way": "weɪ", "we": "wi", "well": "wɛl", "what": "wɑt", "when": "wɛn", "where": "wɛr", "whether": "ˈwɛðər", "which": "wɪʧ", "while": "waɪl", "who": "hu", "whoever": "huˈɛvər", "will": "wɪl", "wind": "wɪnd", "windstorm": "ˈwɪndˌstɔrm", "wisdom": "ˈwɪzdəm", "wish": "wɪʃ", "with": "wɪð", "without": "wɪˈθaʊt", "words": "wɜrdz", "working": "ˈwɜrkɪŋ", "world": "wɜrld", "worldly": "ˈwɜrldli", "years": "jɪrz", "yet": "jɛt", "you": "ju", "young": "jʌŋ"};
@@ -231,7 +408,6 @@
         // Hàm chuyển câu tiếng Anh sang phiên âm IPA dựa trên từ điển
         function convertSentenceToIPA(text) {
             if (!text) return "";
-            // Tách và thay thế từng từ tiếng Anh bằng phiên âm IPA, giữ nguyên dấu câu
             return text.replace(/[a-zA-Z]+/g, (word) => {
                 const lower = word.toLowerCase();
                 return ipaDict[lower] !== undefined ? ipaDict[lower] : word;
@@ -244,7 +420,6 @@
         }
 
         window.onload = async () => {
-            // Thử đọc thêm IPA.txt nếu có trong cùng thư mục để cập nhật bổ sung
             try {
                 const ipaRes = await fetch('IPA.txt');
                 if (ipaRes.ok) {
@@ -256,9 +431,7 @@
                         }
                     }
                 }
-            } catch (e) {
-                // Dùng từ điển ipaDict đã nhúng sẵn
-            }
+            } catch (e) {}
 
             try {
                 const response = await fetch('subtitle.srt');
@@ -349,6 +522,7 @@
             sentencesListDiv.innerHTML = '';
             selectedSentences = [];
             isSentenceLoopMode = false;
+            updateFabBadge();
             
             sentences.forEach((sentence, index) => {
                 const div = document.createElement('div');
@@ -376,6 +550,15 @@
             return `${m}:${s < 10 ? '0' : ''}${s}`;
         }
 
+        function updateFabBadge() {
+            if (selectedSentences.length > 0) {
+                fabBadge.style.display = 'flex';
+                fabBadge.innerText = selectedSentences.length;
+            } else {
+                fabBadge.style.display = 'none';
+            }
+        }
+
         function handleRowClick(index, event) {
             const chk = document.getElementById('chk-' + index);
             if (event.target.type !== 'checkbox') {
@@ -394,11 +577,170 @@
             }
             
             selectedSentences.sort((a, b) => a - b);
+            updateFabBadge();
             
             if (isSentenceLoopMode) {
                 if (selectedSentences.length === 0) {
                     stopSentenceLoop();
                 }
+            }
+        }
+
+        // --- CHỨC NĂNG CHỌN NHANH BẰNG BÀN PHÍM SỐ ĐIỆN THOẠI (5-10,13,15,20-25, *, #) ---
+        function formatSelectedToRangeString() {
+            if (selectedSentences.length === 0) return "";
+            if (sentences.length > 0 && selectedSentences.length === sentences.length) return "*";
+            
+            let sorted = [...selectedSentences].sort((a, b) => a - b).map(i => i + 1);
+            let parts = [];
+            let start = sorted[0], prev = sorted[0];
+
+            for (let i = 1; i < sorted.length; i++) {
+                if (sorted[i] === prev + 1) {
+                    prev = sorted[i];
+                } else {
+                    parts.push(start === prev ? `${start}` : `${start}-${prev}`);
+                    start = prev = sorted[i];
+                }
+            }
+            parts.push(start === prev ? `${start}` : `${start}-${prev}`);
+            return parts.join(',');
+        }
+
+        function openRangeModal() {
+            if (sentences.length === 0) {
+                alert("Chưa có dữ liệu câu phụ đề!");
+                return;
+            }
+            totalSentenceHint.innerText = `(Tổng: ${sentences.length} câu)`;
+            rangeInput.value = formatSelectedToRangeString();
+            rangeModalOverlay.style.display = 'flex';
+            setTimeout(() => {
+                rangeInput.focus();
+                rangeInput.select();
+            }, 50);
+        }
+
+        function closeRangeModal() {
+            rangeModalOverlay.style.display = 'none';
+            rangeInput.blur();
+        }
+
+        function handleOverlayClick(e) {
+            if (e.target === rangeModalOverlay) {
+                closeRangeModal();
+            }
+        }
+
+        function insertQuickChar(ch) {
+            if (ch === '*') {
+                rangeInput.value = '*';
+            } else {
+                const startPos = rangeInput.selectionStart || rangeInput.value.length;
+                const endPos = rangeInput.selectionEnd || rangeInput.value.length;
+                const val = rangeInput.value;
+                rangeInput.value = val.substring(0, startPos) + ch + val.substring(endPos);
+                rangeInput.selectionStart = rangeInput.selectionEnd = startPos + ch.length;
+            }
+            rangeInput.focus();
+        }
+
+        function clearRangeInput() {
+            rangeInput.value = '';
+            rangeInput.focus();
+        }
+
+        // Bấm phím Enter / Go trên bàn phím số điện thoại để áp dụng ngay
+        rangeInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                applyRangeSelection(false);
+            }
+        });
+
+        function parseRangeString(inputStr, maxCount) {
+            const raw = inputStr.trim();
+            if (!raw) return [];
+
+            // Nếu có chứa * hoặc # thì chọn tất cả
+            if (raw.includes('*') || raw.includes('#')) {
+                const all = [];
+                for (let i = 0; i < maxCount; i++) all.push(i);
+                return all;
+            }
+
+            const resultSet = new Set();
+            // Cho phép phân tách bằng dấu phẩy (,), chấm phẩy (;), dấu chấm (.) hoặc khoảng trắng
+            const tokens = raw.split(/[,;.\s]+/);
+
+            tokens.forEach(token => {
+                if (!token) return;
+                if (token.includes('-')) {
+                    const rangeParts = token.split('-').map(p => parseInt(p.trim(), 10));
+                    if (rangeParts.length >= 2 && !isNaN(rangeParts[0]) && !isNaN(rangeParts[1])) {
+                        const startNum = Math.max(1, Math.min(rangeParts[0], rangeParts[1]));
+                        const endNum = Math.min(maxCount, Math.max(rangeParts[0], rangeParts[1]));
+                        for (let n = startNum; n <= endNum; n++) {
+                            resultSet.add(n - 1); // Chuyển về chỉ số mảng 0-based
+                        }
+                    }
+                } else {
+                    const num = parseInt(token, 10);
+                    if (!isNaN(num) && num >= 1 && num <= maxCount) {
+                        resultSet.add(num - 1);
+                    }
+                }
+            });
+
+            return Array.from(resultSet).sort((a, b) => a - b);
+        }
+
+        function applyRangeSelection(startLoopImmediately) {
+            const indices = parseRangeString(rangeInput.value, sentences.length);
+            
+            // Xóa toàn bộ lựa chọn cũ
+            selectedSentences = [];
+            document.querySelectorAll('.sentence-item').forEach(item => {
+                item.classList.remove('selected');
+                const chk = item.querySelector('input[type="checkbox"]');
+                if (chk) chk.checked = false;
+            });
+
+            // Áp dụng lựa chọn mới
+            selectedSentences = indices;
+            selectedSentences.forEach(idx => {
+                const itemEl = document.getElementById('sentence-' + idx);
+                const chkEl = document.getElementById('chk-' + idx);
+                if (itemEl) itemEl.classList.add('selected');
+                if (chkEl) chkEl.checked = true;
+            });
+
+            updateFabBadge();
+            closeRangeModal();
+
+            // Cuộn danh sách đến câu đầu tiên được chọn
+            if (selectedSentences.length > 0) {
+                const firstEl = document.getElementById('sentence-' + selectedSentences[0]);
+                if (firstEl) {
+                    const container = document.getElementById('sentencesList');
+                    container.scrollTop = firstEl.offsetTop - container.offsetTop - 20;
+                }
+            }
+
+            if (startLoopImmediately) {
+                if (selectedSentences.length > 0) {
+                    if (isABLoopMode) resetAB();
+                    isSentenceLoopMode = true;
+                    const btn = document.getElementById('btnToggleLoop');
+                    btn.classList.add('active');
+                    btn.innerText = "🛑 Đang lặp (Bấm để Dừng)";
+                    media.currentTime = sentences[selectedSentences[0]].start;
+                    media.play();
+                } else {
+                    stopSentenceLoop();
+                }
+            } else if (isSentenceLoopMode && selectedSentences.length === 0) {
+                stopSentenceLoop();
             }
         }
 
@@ -415,7 +757,7 @@
                 isSentenceLoopMode = true;
                 const btn = document.getElementById('btnToggleLoop');
                 btn.classList.add('active');
-                btn.innerText = "🛑 Đang Lặp Câu Chọn... (Bấm để Dừng)";
+                btn.innerText = "🛑 Đang lặp (Bấm để Dừng)";
                 
                 media.currentTime = sentences[selectedSentences[0]].start;
                 media.play();
@@ -426,7 +768,7 @@
             isSentenceLoopMode = false;
             const btn = document.getElementById('btnToggleLoop');
             btn.classList.remove('active');
-            btn.innerText = "🔄 Bắt Đầu Lặp Các Câu Đã Chọn";
+            btn.innerText = "🔄 Bắt đầu lặp";
         }
 
         function clearSelection() {
@@ -436,6 +778,7 @@
                 const chk = item.querySelector('input[type="checkbox"]');
                 if (chk) chk.checked = false;
             });
+            updateFabBadge();
             if (isSentenceLoopMode) stopSentenceLoop();
         }
 
@@ -446,7 +789,6 @@
             if (isSentenceLoopMode && selectedSentences.length > 0) {
                 let blocks = getAllContinuousBlocks();
                 
-                // 1. Kiểm tra xem currentTime có đang nằm trong bất kỳ khối hợp lệ nào không
                 let currentBlock = null;
                 let currentBlockIdx = -1;
                 
@@ -459,182 +801,20 @@
                     }
                 }
 
-                // 2. Nếu currentTime nằm ở KHOẢNG TRỐNG giữa các khối (VD: giữa câu 7 và câu 20)
                 if (!currentBlock) {
-                    // Tìm khối tiếp theo có start > currentTime
                     let nextBlock = blocks.find(b => b.start > currentTime);
                     if (nextBlock) {
                         media.currentTime = nextBlock.start;
                         media.play();
                         return;
                     } else {
-                        // Nếu đã qua hết tất cả các khối, vòng về khối đầu tiên
                         media.currentTime = blocks[0].start;
                         media.play();
                         return;
                     }
                 }
 
-                // 3. Tìm câu chính xác đang phát trong khối hiện tại để hiện subtitle
                 let foundIdx = -1;
                 for (let idx of currentBlock.indices) {
                     if (currentTime >= sentences[idx].start && currentTime <= sentences[idx].end) {
-                        foundIdx = idx;
-                        break;
-                    }
-                }
-                if (foundIdx === -1) foundIdx = currentBlock.indices[0];
-
-                if (currentSentenceIndex !== foundIdx) {
-                    currentSentenceIndex = foundIdx;
-                    updateMainSubtitle(sentences[foundIdx].text, sentences[foundIdx].ipa);
-                    updateHighlight(foundIdx);
-                }
-
-                // 4. Nếu chạy đến cuối khối hiện tại
-                if (currentTime >= currentBlock.end - 0.05) {
-                    if (currentBlockIdx < blocks.length - 1) {
-                        // Nhảy cóc mượt mà sang đầu khối tiếp theo (VD từ câu 7 nhảy sang câu 20)
-                        media.currentTime = blocks[currentBlockIdx + 1].start;
-                        media.play();
-                    } else {
-                        // Nếu là khối cuối cùng, vòng về khối đầu tiên
-                        media.currentTime = blocks[0].start;
-                        media.play();
-                    }
-                }
-                
-                return; 
-            }
-
-            if (isABLoopMode && abState === 2) {
-                if (currentTime >= loopB) {
-                    media.currentTime = loopA;
-                }
-            }
-            
-            let foundIndex = -1;
-            for (let i = 0; i < sentences.length; i++) {
-                if (currentTime >= sentences[i].start && currentTime <= sentences[i].end) {
-                    foundIndex = i;
-                    break;
-                }
-            }
-
-            if (foundIndex !== -1) {
-                if (currentSentenceIndex !== foundIndex) {
-                    currentSentenceIndex = foundIndex;
-                    updateMainSubtitle(sentences[foundIndex].text, sentences[foundIndex].ipa);
-                    updateHighlight(foundIndex);
-                }
-            } else {
-                if (!media.paused && !isSentenceLoopMode) {
-                    updateMainSubtitle("♪ ♪ ♪", "");
-                    updateHighlight(-1);
-                }
-            }
-        });
-
-        // --- CÁC HÀM BỔ TRỢ QUẢN LÝ KHỐI ---
-        function getAllContinuousBlocks() {
-            if (selectedSentences.length === 0) return [];
-            let sortedSelected = [...selectedSentences].sort((a, b) => a - b);
-            
-            let blocks = [];
-            let currentBlock = {
-                start: sentences[sortedSelected[0]].start,
-                end: sentences[sortedSelected[0]].end,
-                indices: [sortedSelected[0]]
-            };
-
-            for (let i = 1; i < sortedSelected.length; i++) {
-                let prevIdx = sortedSelected[i - 1];
-                let currIdx = sortedSelected[i];
-                
-                if (currIdx === prevIdx + 1) {
-                    currentBlock.end = sentences[currIdx].end;
-                    currentBlock.indices.push(currIdx);
-                } else {
-                    blocks.push(currentBlock);
-                    currentBlock = {
-                        start: sentences[currIdx].start,
-                        end: sentences[currIdx].end,
-                        indices: [currIdx]
-                    };
-                }
-            }
-            blocks.push(currentBlock);
-            return blocks;
-        }
-
-        function updateHighlight(index) {
-            document.querySelectorAll('.sentence-item').forEach(item => item.classList.remove('current'));
-            if (index !== -1) {
-                const el = document.getElementById('sentence-' + index);
-                if (el) {
-                    el.classList.add('current');
-                    if(!media.paused) {
-                        const container = document.getElementById('sentencesList');
-                        const scrollPos = el.offsetTop - container.offsetTop - (container.clientHeight / 2) + (el.clientHeight / 2);
-                        container.scrollTop = scrollPos;
-                    }
-                }
-            }
-        }
-
-        function handleABClick() {
-            const btn = document.getElementById('btnAB');
-            if (abState === 0) {
-                loopA = media.currentTime;
-                abState = 1;
-                btn.innerText = `[ A-B ] Đã lấy A (${formatTime(loopA)}) - Bấm để đặt mốc B`;
-                btn.style.backgroundColor = "#ffc107";
-                btn.style.color = "#000";
-            } else if (abState === 1) {
-                loopB = media.currentTime;
-                if (loopB > loopA) {
-                    abState = 2;
-                    isABLoopMode = true;
-                    btn.innerText = `[ A-B ] Đang lặp: ${formatTime(loopA)} ⟷ ${formatTime(loopB)} (Bấm để TẮT)`;
-                    btn.style.backgroundColor = "#28a745";
-                    btn.style.color = "#fff";
-                    
-                    if (isSentenceLoopMode) stopSentenceLoop();
-                } else {
-                    alert("Mốc B phải nằm sau mốc A!");
-                    resetAB();
-                }
-            } else {
-                resetAB();
-            }
-        }
-
-        function resetAB() {
-            abState = 0;
-            isABLoopMode = false;
-            const btn = document.getElementById('btnAB');
-            btn.innerText = "[ A-B ] Bấm vào đây để đặt mốc A";
-            btn.style.backgroundColor = "#007bff";
-            btn.style.color = "#fff";
-        }
-        // Đăng ký Service Worker để lưu Offline
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(() => console.log('Đã lưu trang web để chạy Offline!'))
-                    .catch(err => console.log('Lỗi lưu Offline:', err));
-            });
-        }
-
-        // Mẹo quan trọng trên điện thoại: Nạp audio.mp3 dưới dạng Blob để tua/lặp mượt mà khi tắt mạng
-        fetch('audio.mp3')
-            .then(res => res.blob())
-            .then(blob => {
-                const currentTime = media.currentTime;
-                media.src = URL.createObjectURL(blob);
-                media.currentTime = currentTime;
-            })
-            .catch(() => console.log('Đang dùng nguồn audio mặc định'));
-    </script>
-</body>
-</html>
+                        foundIdx

@@ -308,7 +308,7 @@
             <b>Lưu ý khi mở trên PC:</b> Trình duyệt chặn tự động đọc file cục bộ. Vui lòng chọn file thủ công:
             <div style="margin-top: 10px;">
                 Chọn file MP3: <input type="file" id="mediaUpload" accept="audio/mp3,audio/*"> <br><br>
-                Chọn file SRT: <input type="file" id="srtUpload" accept=".srt">
+                Chọn file SRT: <input type="file" id="srtUpload" accept=".srt,.txt">
             </div>
         </div>
 
@@ -361,10 +361,8 @@
                 Nhập câu hoặc khoảng câu (VD: <b>5-10,13,15,20-25</b>).<br>
                 Nhập <b>*</b> hoặc <b>#</b> để chọn tất cả.
             </p>
-            <!-- type="tel" giúp mở bàn phím số điện thoại có sẵn 0-9, *, # -->
             <input type="tel" inputmode="tel" id="rangeInput" class="range-input-box" placeholder="VD: 5-10,13,15 hoặc *" autocomplete="off">
             
-            <!-- Hàng phím phụ trợ nhanh phòng trường hợp bàn phím số điện thoại ẩn dấu - hoặc , -->
             <div class="quick-char-bar">
                 <button type="button" class="quick-char-btn" onclick="insertQuickChar('-')"><b>-</b> (Đến)</button>
                 <button type="button" class="quick-char-btn" onclick="insertQuickChar(',')"><b>,</b> (Phẩy)</button>
@@ -405,7 +403,6 @@
         let selectedSentences = [];
         let isSentenceLoopMode = false;
 
-        // Hàm chuyển câu tiếng Anh sang phiên âm IPA dựa trên từ điển
         function convertSentenceToIPA(text) {
             if (!text) return "";
             return text.replace(/[a-zA-Z]+/g, (word) => {
@@ -419,9 +416,26 @@
             mainSubIpa.innerText = ipaText ? `/${ipaText}/` : "";
         }
 
-        window.onload = async () => {
+        // Khởi chạy tải phụ đề ngay khi cấu trúc HTML sẵn sàng (không đợi MP3 tải xong)
+        async function initApp() {
+            // 1. Ưu tiên đọc subtitle.srt ngay lập tức
             try {
-                const ipaRes = await fetch('IPA.txt');
+                const response = await fetch('subtitle.srt', { cache: 'no-cache' });
+                if (response.ok) {
+                    const text = await response.text();
+                    processSRT(text);
+                    updateMainSubtitle("Đã tự động tải dữ liệu.<br>Bấm Play hoặc chọn câu để nghe.", "");
+                } else {
+                    throw new Error("Not found");
+                }
+            } catch (error) {
+                updateMainSubtitle("Vui lòng chọn file thủ công.", "");
+                localFallback.style.display = 'block';
+            }
+
+            // 2. Tải bổ sung IPA.txt (nếu có) ở chế độ nền
+            try {
+                const ipaRes = await fetch('IPA.txt', { cache: 'no-cache' });
                 if (ipaRes.ok) {
                     const ipaText = await ipaRes.text();
                     const lines = ipaText.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
@@ -430,21 +444,31 @@
                             ipaDict[lines[i].toLowerCase()] = lines[i + 1];
                         }
                     }
+                    if (sentences.length > 0) {
+                        sentences.forEach(s => { s.ipa = convertSentenceToIPA(s.text); });
+                        renderSentencesList();
+                    }
                 }
             } catch (e) {}
 
-            try {
-                const response = await fetch('subtitle.srt');
-                if (response.ok) {
-                    const text = await response.text();
-                    processSRT(text);
-                    updateMainSubtitle("Đã tự động tải dữ liệu.<br>Bấm Play hoặc chọn câu để nghe.", "");
-                } else { throw new Error("Not found"); }
-            } catch (error) {
-                updateMainSubtitle("Vui lòng chọn file thủ công.", "");
-                localFallback.style.display = 'block';
-            }
-        };
+            // 3. Sau khi phụ đề đã hiển thị xong mới tải ngầm audio.mp3 dạng Blob
+            fetch('audio.mp3')
+                .then(res => res.ok ? res.blob() : Promise.reject())
+                .then(blob => {
+                    const currentTime = media.currentTime;
+                    const wasPaused = media.paused;
+                    media.src = URL.createObjectURL(blob);
+                    media.currentTime = currentTime;
+                    if (!wasPaused) media.play();
+                })
+                .catch(() => console.log('Đang dùng nguồn audio mặc định'));
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initApp);
+        } else {
+            initApp();
+        }
 
         document.getElementById('mediaUpload').addEventListener('change', e => {
             if (e.target.files[0]) media.src = URL.createObjectURL(e.target.files[0]);
@@ -461,18 +485,21 @@
         });
 
         function processSRT(data) {
-            const blocks = data.replace(/\r/g, '').trim().split('\n\n');
+            const blocks = data.replace(/\r/g, '').trim().split(/\n\s*\n/);
             const parsedData = [];
             blocks.forEach(block => {
                 const lines = block.split('\n');
-                if(lines.length >= 3) {
-                    const timeMatch = lines[1].match(/(\d{2}:\d{2}:\d{2},\d{3}) --> (\d{2}:\d{2}:\d{2},\d{3})/);
-                    if(timeMatch) {
-                        parsedData.push({
-                            start: timeToSeconds(timeMatch[1]),
-                            end: timeToSeconds(timeMatch[2]),
-                            text: lines.slice(2).join(' ').replace(/<[^>]*>?/gm, '').replace(/\[.*?\]/g, '').replace(/>>/g, '').trim()
-                        });
+                if (lines.length >= 2) {
+                    const timeLineIdx = lines.findIndex(l => l.includes('-->'));
+                    if (timeLineIdx !== -1) {
+                        const timeMatch = lines[timeLineIdx].match(/(\d{2}:\d{2}:\d{2}[,.]\d{3})\s*-->\s*(\d{2}:\d{2}:\d{2}[,.]\d{3})/);
+                        if (timeMatch) {
+                            parsedData.push({
+                                start: timeToSeconds(timeMatch[1]),
+                                end: timeToSeconds(timeMatch[2]),
+                                text: lines.slice(timeLineIdx + 1).join(' ').replace(/<[^>]*>?/gm, '').replace(/\[.*?\]/g, '').replace(/>>/g, '').trim()
+                            });
+                        }
                     }
                 }
             });
@@ -499,7 +526,7 @@
                         currentSentence.text += " " + part;
                     }
                     
-                    if (part.match(/[.!?]$/)) {
+                    if (part.match(/[.!?]["”']?$/)) {
                         currentSentence.ipa = convertSentenceToIPA(currentSentence.text);
                         result.push({...currentSentence});
                         currentSentence = null;
@@ -579,10 +606,8 @@
             selectedSentences.sort((a, b) => a - b);
             updateFabBadge();
             
-            if (isSentenceLoopMode) {
-                if (selectedSentences.length === 0) {
-                    stopSentenceLoop();
-                }
+            if (isSentenceLoopMode && selectedSentences.length === 0) {
+                stopSentenceLoop();
             }
         }
 
@@ -650,7 +675,6 @@
             rangeInput.focus();
         }
 
-        // Bấm phím Enter / Go trên bàn phím số điện thoại để áp dụng ngay
         rangeInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -662,7 +686,6 @@
             const raw = inputStr.trim();
             if (!raw) return [];
 
-            // Nếu có chứa * hoặc # thì chọn tất cả
             if (raw.includes('*') || raw.includes('#')) {
                 const all = [];
                 for (let i = 0; i < maxCount; i++) all.push(i);
@@ -670,7 +693,6 @@
             }
 
             const resultSet = new Set();
-            // Cho phép phân tách bằng dấu phẩy (,), chấm phẩy (;), dấu chấm (.) hoặc khoảng trắng
             const tokens = raw.split(/[,;.\s]+/);
 
             tokens.forEach(token => {
@@ -681,7 +703,7 @@
                         const startNum = Math.max(1, Math.min(rangeParts[0], rangeParts[1]));
                         const endNum = Math.min(maxCount, Math.max(rangeParts[0], rangeParts[1]));
                         for (let n = startNum; n <= endNum; n++) {
-                            resultSet.add(n - 1); // Chuyển về chỉ số mảng 0-based
+                            resultSet.add(n - 1);
                         }
                     }
                 } else {
@@ -698,7 +720,6 @@
         function applyRangeSelection(startLoopImmediately) {
             const indices = parseRangeString(rangeInput.value, sentences.length);
             
-            // Xóa toàn bộ lựa chọn cũ
             selectedSentences = [];
             document.querySelectorAll('.sentence-item').forEach(item => {
                 item.classList.remove('selected');
@@ -706,7 +727,6 @@
                 if (chk) chk.checked = false;
             });
 
-            // Áp dụng lựa chọn mới
             selectedSentences = indices;
             selectedSentences.forEach(idx => {
                 const itemEl = document.getElementById('sentence-' + idx);
@@ -718,7 +738,6 @@
             updateFabBadge();
             closeRangeModal();
 
-            // Cuộn danh sách đến câu đầu tiên được chọn
             if (selectedSentences.length > 0) {
                 const firstEl = document.getElementById('sentence-' + selectedSentences[0]);
                 if (firstEl) {
@@ -782,7 +801,7 @@
             if (isSentenceLoopMode) stopSentenceLoop();
         }
 
-        // --- LOGIC CẬP NHẬT THỜI GIAN CHÍNH (ĐÃ TỐI ƯU NHẢY CÓC CÁC KHỐI RỜI RẠC) ---
+        // --- LOGIC CẬP NHẬT THỜI GIAN CHÍNH ---
         media.addEventListener('timeupdate', () => {
             const currentTime = media.currentTime;
             
@@ -817,4 +836,148 @@
                 let foundIdx = -1;
                 for (let idx of currentBlock.indices) {
                     if (currentTime >= sentences[idx].start && currentTime <= sentences[idx].end) {
-                        foundIdx
+                        foundIdx = idx;
+                        break;
+                    }
+                }
+                if (foundIdx === -1) foundIdx = currentBlock.indices[0];
+
+                if (currentSentenceIndex !== foundIdx) {
+                    currentSentenceIndex = foundIdx;
+                    updateMainSubtitle(sentences[foundIdx].text, sentences[foundIdx].ipa);
+                    updateHighlight(foundIdx);
+                }
+
+                if (currentTime >= currentBlock.end - 0.05) {
+                    if (currentBlockIdx < blocks.length - 1) {
+                        media.currentTime = blocks[currentBlockIdx + 1].start;
+                        media.play();
+                    } else {
+                        media.currentTime = blocks[0].start;
+                        media.play();
+                    }
+                }
+                
+                return; 
+            }
+
+            if (isABLoopMode && abState === 2) {
+                if (currentTime >= loopB) {
+                    media.currentTime = loopA;
+                }
+            }
+            
+            let foundIndex = -1;
+            for (let i = 0; i < sentences.length; i++) {
+                if (currentTime >= sentences[i].start && currentTime <= sentences[i].end) {
+                    foundIndex = i;
+                    break;
+                }
+            }
+
+            if (foundIndex !== -1) {
+                if (currentSentenceIndex !== foundIndex) {
+                    currentSentenceIndex = foundIndex;
+                    updateMainSubtitle(sentences[foundIndex].text, sentences[foundIndex].ipa);
+                    updateHighlight(foundIndex);
+                }
+            } else {
+                if (!media.paused && !isSentenceLoopMode) {
+                    updateMainSubtitle("♪ ♪ ♪", "");
+                    updateHighlight(-1);
+                }
+            }
+        });
+
+        function getAllContinuousBlocks() {
+            if (selectedSentences.length === 0) return [];
+            let sortedSelected = [...selectedSentences].sort((a, b) => a - b);
+            
+            let blocks = [];
+            let currentBlock = {
+                start: sentences[sortedSelected[0]].start,
+                end: sentences[sortedSelected[0]].end,
+                indices: [sortedSelected[0]]
+            };
+
+            for (let i = 1; i < sortedSelected.length; i++) {
+                let prevIdx = sortedSelected[i - 1];
+                let currIdx = sortedSelected[i];
+                
+                if (currIdx === prevIdx + 1) {
+                    currentBlock.end = sentences[currIdx].end;
+                    currentBlock.indices.push(currIdx);
+                } else {
+                    blocks.push(currentBlock);
+                    currentBlock = {
+                        start: sentences[currIdx].start,
+                        end: sentences[currIdx].end,
+                        indices: [currIdx]
+                    };
+                }
+            }
+            blocks.push(currentBlock);
+            return blocks;
+        }
+
+        function updateHighlight(index) {
+            document.querySelectorAll('.sentence-item').forEach(item => item.classList.remove('current'));
+            if (index !== -1) {
+                const el = document.getElementById('sentence-' + index);
+                if (el) {
+                    el.classList.add('current');
+                    if(!media.paused) {
+                        const container = document.getElementById('sentencesList');
+                        const scrollPos = el.offsetTop - container.offsetTop - (container.clientHeight / 2) + (el.clientHeight / 2);
+                        container.scrollTop = scrollPos;
+                    }
+                }
+            }
+        }
+
+        function handleABClick() {
+            const btn = document.getElementById('btnAB');
+            if (abState === 0) {
+                loopA = media.currentTime;
+                abState = 1;
+                btn.innerText = `[ A-B ] Đã lấy A (${formatTime(loopA)}) - Bấm để đặt mốc B`;
+                btn.style.backgroundColor = "#ffc107";
+                btn.style.color = "#000";
+            } else if (abState === 1) {
+                loopB = media.currentTime;
+                if (loopB > loopA) {
+                    abState = 2;
+                    isABLoopMode = true;
+                    btn.innerText = `[ A-B ] Đang lặp: ${formatTime(loopA)} ⟷ ${formatTime(loopB)} (Bấm để TẮT)`;
+                    btn.style.backgroundColor = "#28a745";
+                    btn.style.color = "#fff";
+                    
+                    if (isSentenceLoopMode) stopSentenceLoop();
+                } else {
+                    alert("Mốc B phải nằm sau mốc A!");
+                    resetAB();
+                }
+            } else {
+                resetAB();
+            }
+        }
+
+        function resetAB() {
+            abState = 0;
+            isABLoopMode = false;
+            const btn = document.getElementById('btnAB');
+            btn.innerText = "[ A-B ] Bấm vào đây để đặt mốc A";
+            btn.style.backgroundColor = "#007bff";
+            btn.style.color = "#fff";
+        }
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(() => console.log('Đã lưu trang web để chạy Offline!'))
+                    .catch(err => console.log('Lỗi lưu Offline:', err));
+            });
+        }
+    </script>
+</body>
+</html>

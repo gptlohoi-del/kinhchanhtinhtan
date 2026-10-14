@@ -417,23 +417,51 @@
         }
 
         // Khởi chạy tải phụ đề ngay khi cấu trúc HTML sẵn sàng (không đợi MP3 tải xong)
-        initApp()
+        // Khởi chạy tải phụ đề và IPA ngay khi cấu trúc HTML sẵn sàng
+        async function initApp() {
+            // 1. Đọc file IPA.txt trước để nạp từ điển phiên âm
+            try {
+                const ipaRes = await fetch('IPA.txt', { cache: 'no-cache' });
+                if (ipaRes.ok) {
+                    const ipaText = await ipaRes.text();
+                    const lines = ipaText.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+                    for (let i = 0; i < lines.length; i += 2) {
+                        if (i + 1 < lines.length) {
+                            ipaDict[lines[i].toLowerCase()] = lines[i + 1];
+                        }
+                    }
+                }
+            } catch (e) {
+                console.log('Không tìm thấy hoặc chưa tải được IPA.txt');
+            }
 
+            // 2. Đọc file subtitle.srt và hiển thị danh sách câu
+            try {
+                const response = await fetch('subtitle.srt', { cache: 'no-cache' });
+                if (response.ok) {
+                    const text = await response.text();
+                    processSRT(text);
+                    updateMainSubtitle("Đã tự động tải dữ liệu.<br>Bấm Play hoặc chọn câu để nghe.", "");
+                } else {
+                    throw new Error("Not found");
+                }
+            } catch (error) {
+                updateMainSubtitle("Vui lòng chọn file thủ công.", "");
+                localFallback.style.display = 'block';
+            }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+            // 3. Tải ngầm audio.mp3 dạng Blob để tua/lặp mượt khi tắt mạng
+            fetch('audio.mp3')
+                .then(res => res.ok ? res.blob() : Promise.reject())
+                .then(blob => {
+                    const currentTime = media.currentTime;
+                    const wasPaused = media.paused;
+                    media.src = URL.createObjectURL(blob);
+                    media.currentTime = currentTime;
+                    if (!wasPaused) media.play();
+                })
+                .catch(() => console.log('Đang dùng nguồn audio mặc định'));
+        }
 
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', initApp);

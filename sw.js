@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kinh-chanh-tinh-tan-smart-v4';
+const CACHE_NAME = 'kinh-chanh-tinh-tan-smart-v5';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',

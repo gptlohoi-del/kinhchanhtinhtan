@@ -1,7 +1,8 @@
-const CACHE_NAME = 'kinh-chanh-tinh-tan-smart-v3';
+const CACHE_NAME = 'kinh-chanh-tinh-tan-smart-v4';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
+    './IPA.txt',
     './subtitle.srt',
     './audio.mp3'
 ];
